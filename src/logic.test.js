@@ -1,4 +1,4 @@
-import { leerDieta, calcularGramos, proponer, equivalencia, equivalencias, textoMedida, gramosPostre, restarPostres, ajustarPlato, resumenPlato, textoVolumen } from '../logic.js'
+import { leerDieta, calcularGramos, proponer, equivalencia, equivalencias, textoMedida, gramosPostre, restarPostres, ajustarPlato, resumenPlato, textoVolumen, pasoGramos, TOL_G, TOL_KCAL, kcal, macrosDe } from '../logic.js'
 import { ALIMENTOS } from '../alimentos.js'
 
 const al = (id) => ALIMENTOS.find((a) => a.id === id)
@@ -158,6 +158,36 @@ describe('plato', () => {
     expect(x[3]).toBe(0) // el salmón ya trae más grasa de la pedida
     const r = resumenPlato({ hc: 0, p: 45, g: 5 }, [], autos)
     expect(r.exceso.g).toBeGreaterThan(0)
+  })
+})
+
+describe('ajuste con compromiso', () => {
+  it('pasos de 10 g', () => {
+    expect(pasoGramos(63, 1)).toBe(70)
+    expect(pasoGramos(63, -1)).toBe(60)
+    expect(pasoGramos(60, 1)).toBe(70)
+    expect(pasoGramos(60, -1)).toBe(50)
+    expect(pasoGramos(4, -1)).toBe(0)
+  })
+
+  it('si no se puede cuadrar exacto, el error queda acotado y sin gramos negativos', () => {
+    const autos = [
+      { alimento: al('salmon'), grupo: 'p' },
+      { alimento: al('aceite'), grupo: 'g' },
+      { alimento: al('arroz'), grupo: 'hc' },
+    ]
+    const obj = { hc: 60, p: 20, g: 8 }
+    const x = ajustarPlato(obj, [], autos)
+    expect(x.every((v) => v >= 0)).toBe(true)
+    const t = autos.reduce((s, a, i) => { const m = macrosDe(a.alimento, x[i]); return { hc: s.hc + m.hc, p: s.p + m.p, g: s.g + m.g } }, { hc: 0, p: 0, g: 0 })
+    // el salmón ya trae la grasa pedida: la proteína queda a menos de TOL_G x 3 del objetivo
+    expect(Math.abs(t.p - obj.p)).toBeLessThan(TOL_G * 3)
+    expect(Math.abs(kcal(t) - kcal(obj))).toBeLessThan(TOL_KCAL * 4)
+  })
+
+  it('con un solo grupo cuadra ese macro', () => {
+    const [x] = ajustarPlato({ hc: 80, p: 45, g: 20 }, [], [{ alimento: al('arroz'), grupo: 'hc' }])
+    expect(x).toBeCloseTo(100, 5)
   })
 })
 

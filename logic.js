@@ -245,55 +245,58 @@ export function restarPostres(objetivo, postres) {
 
 // ---------- Plato ----------
 
-// Resuelve A·x = b (A cuadrada) por eliminación gaussiana. Devuelve null si es singular.
-function resolver(A, b) {
-  const n = b.length
-  const M = A.map((fila, i) => [...fila, b[i]])
-  for (let i = 0; i < n; i++) {
-    let piv = i
-    for (let r = i + 1; r < n; r++) if (Math.abs(M[r][i]) > Math.abs(M[piv][i])) piv = r
-    if (Math.abs(M[piv][i]) < 1e-12) return null
-    ;[M[i], M[piv]] = [M[piv], M[i]]
-    for (let r = 0; r < n; r++) {
-      if (r === i) continue
-      const f = M[r][i] / M[i][i]
-      for (let c = i; c <= n; c++) M[r][c] -= f * M[i][c]
-    }
-  }
-  return M.map((fila, i) => fila[n] / fila[i])
+// Margen que se da por cuadrado: gramos de un macro y kcal de la comida.
+export const TOL_G = 3
+export const TOL_KCAL = 25
+
+// Paso de los botones ± de cada alimento.
+export const PASO_G = 10
+
+// Siguiente cantidad en múltiplos de 10 g (mínimo 0). Desde 63 g: «+» da 70 y «−» da 60.
+export function pasoGramos(actual, sentido) {
+  const a = Math.round(actual * 1e6) / 1e6
+  const v = sentido > 0 ? Math.floor(a / PASO_G) * PASO_G + PASO_G : Math.ceil(a / PASO_G) * PASO_G - PASO_G
+  return Math.max(0, v)
 }
 
 // Gramos de los alimentos automáticos de un plato.
 // `fijos`: [{alimento, gramos}] (postres y cantidades que el usuario ha fijado).
 // `autos`: [{alimento, grupo}]: cada uno cubre su macro `grupo`; si hay varios del mismo grupo, se lo reparten a partes iguales.
-// Lo que aportan los demás alimentos a ese macro se descuenta. Si a un grupo no le queda nada, sus alimentos van a 0 g.
+// Cada grupo recibe una cantidad c_g del macro que cubre; el resto de macros de sus alimentos se descuenta del objetivo.
+// Si el objetivo se puede cuadrar exacto, se cuadra. Si no (un alimento ya trae más de un macro de lo pedido),
+// se elige el reparto con menos error total en gramos y kcal, con c_g ≥ 0 (algún grupo puede quedarse a 0 g).
 export function ajustarPlato(objetivo, fijos, autos) {
   const base = sumar(fijos.map(({ alimento, gramos }) => macrosDe(alimento, gramos)))
   const x = autos.map(() => 0)
-  let activos = autos.map((_, i) => i)
-  for (let vuelta = 0; vuelta <= autos.length && activos.length; vuelta++) {
-    const n = activos.length
-    const A = activos.map(() => Array(n).fill(0))
-    const b = Array(n).fill(0)
-    activos.forEach((i, fila) => {
-      const k = autos[i].grupo
-      const mismos = activos.filter((j) => autos[j].grupo === k)
-      // macro_k(i)·x_i = (objetivo_k − fijos_k − Σ macro_k(j)·x_j de otros grupos) / nº de alimentos del grupo
-      A[fila][fila] = (autos[i].alimento[k] / 100) * mismos.length
-      activos.forEach((j, col) => {
-        if (autos[j].grupo !== k) A[fila][col] += autos[j].alimento[k] / 100
-      })
-      b[fila] = objetivo[k] - base[k]
-    })
-    const sol = resolver(A, b)
-    if (!sol) break
-    const negativos = activos.filter((_, f) => sol[f] < 0)
-    activos.forEach((i, f) => (x[i] = Math.max(0, sol[f])))
-    if (!negativos.length) break
-    // El que más se pasa de negativo se queda a 0 y se vuelve a resolver con el resto.
-    const peor = negativos.reduce((a, i) => (sol[activos.indexOf(i)] < sol[activos.indexOf(a)] ? i : a))
-    x[peor] = 0
-    activos = activos.filter((i) => i !== peor)
+  const grupos = MACROS.filter((g) => autos.some((a) => a.grupo === g && a.alimento[g] > 0))
+  if (!grupos.length) return x
+  const miembros = Object.fromEntries(grupos.map((g) => [g, autos.map((a, i) => (a.grupo === g && a.alimento[g] > 0 ? i : -1)).filter((i) => i >= 0)]))
+  // aporte de cada macro k por gramo de macro g cubierto
+  const aporte = (k, g) => miembros[g].reduce((s, i) => s + autos[i].alimento[k] / autos[i].alimento[g], 0) / miembros[g].length
+  const filas = grupos.slice() // macros que se comparan con el objetivo
+  const conEnergia = grupos.length === MACROS.length
+  const T = (k) => objetivo[k] - base[k]
+  const columna = (g) => {
+    const c = filas.map((k) => aporte(k, g))
+    if (conEnergia) c.push(MACROS.reduce((s, k) => s + KCAL[k] * aporte(k, g), 0) / KCAL.p)
+    return c
+  }
+  const b = filas.map(T)
+  if (conEnergia) b.push(MACROS.reduce((s, k) => s + KCAL[k] * T(k), 0) / KCAL.p)
+  const coste = (c, cols) => b.reduce((s, bk, f) => s + (bk - cols.reduce((t, col, j) => t + col[f] * c[j], 0)) ** 2, 0)
+
+  let mejor = { coste: b.reduce((s, v) => s + v * v, 0), c: {} }
+  for (let mascara = 1; mascara < 1 << grupos.length; mascara++) {
+    const sub = grupos.filter((_, j) => mascara & (1 << j))
+    const cols = sub.map(columna)
+    const c = minimosCuadrados(cols, b)
+    if (!c || c.some((v) => v <= 1e-9)) continue
+    const e = coste(c, cols)
+    if (e < mejor.coste - 1e-9) mejor = { coste: e, c: Object.fromEntries(sub.map((g, j) => [g, c[j]])) }
+  }
+  for (const g of grupos) {
+    const cg = mejor.c[g] || 0
+    for (const i of miembros[g]) x[i] = (100 * cg) / (miembros[g].length * autos[i].alimento[g])
   }
   return x
 }
@@ -310,7 +313,7 @@ export function resumenPlato(objetivo, fijos, autos) {
   for (const k of MACROS) {
     const r = objetivo[k] - total[k]
     resta[k] = Math.max(0, r)
-    if (r < -2) exceso[k] = -r
+    if (r < -TOL_G) exceso[k] = -r
   }
   return { gramos, total, resta, exceso }
 }

@@ -1,5 +1,6 @@
 import { ALIMENTOS } from './alimentos.js'
 import {
+  TOL_G, TOL_KCAL, pasoGramos,
   COMIDAS, NOMBRE_COMIDA, MACROS, leerDieta, kcal, nombreMacro, redondear,
   equivalencias, textoMedida, textoVolumen, gramosPostre, restarPostres, macrosDe, resumenPlato,
 } from './logic.js'
@@ -99,7 +100,7 @@ function resumen(objetivo, total) {
   const casilla = (clase, etiqueta, lleva, meta, unidad) => {
     const dif = meta - lleva
     const pct = meta > 0 ? Math.min(100, (lleva / meta) * 100) : 0
-    const queda = Math.abs(dif) < (unidad === 'kcal' ? 15 : 2) ? '<span class="queda ok">cuadrado</span>'
+    const queda = Math.abs(dif) < (unidad === 'kcal' ? TOL_KCAL : TOL_G) ? '<span class="queda ok">cuadrado</span>'
       : dif > 0 ? `<span class="queda">quedan ${fmt(dif, unidad === 'kcal' ? 0 : 1)}${unidad === 'kcal' ? '' : ' g'}</span>`
       : `<span class="queda off">+${fmt(-dif, unidad === 'kcal' ? 0 : 1)}${unidad === 'kcal' ? '' : ' g'} de más</span>`
     return `<div class="macro ${clase}"><span class="label">${etiqueta}</span><b>${fmt(lleva, unidad === 'kcal' ? 0 : 1)}</b><span class="de">de ${fmt(meta, 0)} ${unidad}</span>
@@ -153,6 +154,7 @@ function pintarPlato(s) {
   const items = platoDe(estado.comida)
   $('plato-vacio').hidden = items.length > 0
   $('vaciar').hidden = !items.length
+  $('reajustar').hidden = !items.some(({ it }) => it.fijo != null)
   $('plato').innerHTML = items
     .map(({ it, alimento: a }, i) => {
       const g = s.gramos[i]
@@ -169,8 +171,8 @@ function pintarPlato(s) {
           <span class="meta">${cadenaDe(a) !== 'generico' ? `<span class="tag">${CADENAS[cadenaDe(a)]}</span>` : ''}<span>${fmt(m.p)} P · ${fmt(m.hc)} HC · ${fmt(m.g)} G · ${Math.round(kcal(m))} kcal</span></span></div>
         <div><div class="grams">${fmt(g, 0)}<small>${esc(etiqueta)}</small></div>${sub.map((t) => `<div class="sub">${esc(t)}</div>`).join('')}</div>
         <div class="dish-ctl">
-          <button class="mini" data-pmenos="${i}" aria-label="Menos">− 5 g</button>
-          <button class="mini" data-pmas="${i}" aria-label="Más">+ 5 g</button>
+          <button class="mini" data-pmenos="${i}" aria-label="Menos">− 10 g</button>
+          <button class="mini" data-pmas="${i}" aria-label="Más">+ 10 g</button>
           ${it.fijo != null ? `<span class="badge fijo">fijado</span><button class="mini" data-pauto="${i}">Ajustar solo</button>` : '<span class="badge">ajustado</span>'}
           <button class="mini rm" data-pquitar="${i}">Quitar</button>
         </div>
@@ -190,10 +192,14 @@ $('plato').addEventListener('click', (e) => {
   if (b.dataset.pquitar !== undefined) lista.splice(i, 1)
   else if (b.dataset.pauto !== undefined) it.fijo = null
   else {
-    const actual = s.gramos[i] || 0
-    it.fijo = Math.max(0, Math.round(actual / 5) * 5 + (b.dataset.pmas !== undefined ? 5 : -5))
+    it.fijo = pasoGramos(s.gramos[i] || 0, b.dataset.pmas !== undefined ? 1 : -1)
   }
   estado.plato[estado.comida] = lista
+  guardar()
+  pintar()
+})
+$('reajustar').addEventListener('click', () => {
+  for (const it of estado.plato[estado.comida] || []) it.fijo = null
   guardar()
   pintar()
 })
