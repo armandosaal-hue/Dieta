@@ -57,7 +57,7 @@ function pintarComidas() {
   ).join('')
   const total = COMIDAS.reduce((s, c) => s + kcal(d[c]), 0)
   $('sub').textContent = `${Math.round(total)} kcal al día`
-  $('banner-ejemplo').hidden = !!estado.dieta
+  $('banner-ejemplo').hidden = !!estado.dieta || buscando
 }
 $('meals').addEventListener('click', (e) => {
   const b = e.target.closest('[data-comida]')
@@ -114,7 +114,7 @@ function pintarEquiv() {
   $('obj-kcal').textContent = ''
   $('objetivo').innerHTML = resumen(s.objetivo, s.total)
   $('mini').innerHTML =
-    'Llevas ' +
+    (buscando ? `${NOMBRE_COMIDA[estado.comida]} · ` : 'Llevas ') +
     MACROS.map((k) => `<span class="${k}">${k === 'hc' ? 'HC' : k.toUpperCase()} ${fmt(s.total[k], 0)}/${fmt(s.objetivo[k], 0)}</span>`).join('') +
     `<span>${Math.round(kcal(s.total))}/${Math.round(kcal(s.objetivo))} kcal</span>`
   const ex = Object.entries(s.exceso)
@@ -136,11 +136,17 @@ function pintarEquiv() {
       (k) => `<button class="tab ${k}" role="tab" data-grupo="${k}" aria-selected="${k === estado.grupo}">${GRUPO[k]}<small>${resta[k] > 0.5 ? `quedan ${fmt(resta[k])} g` : 'cubierto'}</small><small class="n">${cuantas[k]} opciones</small></button>`,
     ).join('')
 
+  pintarChips()
+  if (!buscando) pintarLista()
+}
+
+function pintarChips() {
   const opciones = ['todos', 'favoritos', ...Object.keys(CADENAS).filter((c) => c !== 'propio' || estado.propios.length)]
-  $('cadenas').innerHTML = opciones
+  const html = opciones
     .map((c) => `<button class="chip" data-cadena="${c}" aria-pressed="${c === estado.cadena}">${c === 'todos' ? 'Todos' : c === 'favoritos' ? '★ Favoritos' : CADENAS[c]}</button>`)
     .join('')
-  pintarLista()
+  $('cadenas').innerHTML = html
+  $('cadenas-top').innerHTML = html
 }
 
 function pintarPlato(s) {
@@ -208,12 +214,10 @@ function pintarLista() {
   const items = platoDe(estado.comida)
   const postres = postresDe(estado.comida)
   const s = calcular(items, postres)
-  const q = norm($('buscar').value.trim())
   const base = enTodos ? opcionesTodos() : equivalencias(todos(), k, 1)
   let filas = base.filter(({ alimento: a }) => {
     if (estado.cadena === 'favoritos' && !esFav(a.id)) return false
-    if (!['todos', 'favoritos'].includes(estado.cadena) && cadenaDe(a) !== estado.cadena) return false
-    return !q || norm(`${a.nombre} ${CADENAS[cadenaDe(a)]}`).includes(q)
+    return ['todos', 'favoritos'].includes(estado.cadena) || cadenaDe(a) === estado.cadena
   })
   // Favoritos arriba; los alimentos que cuentan sobre todo en otro grupo, al final.
   const rango = (f) => (esFav(f.alimento.id) ? 0 : f.secundario ? 2 : 1)
@@ -271,22 +275,122 @@ $('tabs').addEventListener('click', (e) => {
   guardar()
   pintarEquiv()
 })
-$('cadenas').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-cadena]')
-  if (!b) return
-  estado.cadena = b.dataset.cadena
-  guardar()
-  pintarEquiv()
+for (const id of ['cadenas', 'cadenas-top']) {
+  $(id).addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cadena]')
+    if (!b) return
+    estado.cadena = b.dataset.cadena
+    guardar()
+    pintarChips()
+    if (buscando) pintarBusqueda()
+    else pintarLista()
+  })
+}
+
+// ---------- Buscador de arriba ----------
+// Modo búsqueda: al tocar el buscador se muestran, juntos, todos los alimentos y productos (también los postres).
+// Se sale con «Cancelar», con Escape o al añadir un alimento.
+let buscando = false
+
+function entrarBusqueda() {
+  if (estado.vista !== 'equiv') return
+  buscando = true
+  aplicarModoBusqueda()
+  pintarBusqueda()
+}
+function salirBusqueda() {
+  buscando = false
+  $('buscar').value = ''
+  $('buscar').blur()
+  aplicarModoBusqueda()
+}
+function aplicarModoBusqueda() {
+  $('cabecera').classList.toggle('buscando', buscando)
+  $('buscar-cancelar').hidden = !buscando
+  $('cadenas-top').hidden = !buscando
+  $('bloque-busqueda').hidden = !buscando
+  $('bloque-normal').hidden = buscando
+  if (estado.vista === 'equiv') pintarEquiv()
+  if (buscando) window.scrollTo(0, 0)
+}
+
+function relevancia(a, q) {
+  if (!q) return 3
+  const n = norm(a.nombre)
+  if (n.startsWith(q)) return 1
+  return n.split(/[^a-z0-9]+/).some((w) => w.startsWith(q)) ? 2 : 3
+}
+
+function pintarBusqueda() {
+  const q = norm($('buscar').value.trim())
+  const palabras = q.split(/\s+/).filter(Boolean)
+  const items = platoDe(estado.comida)
+  const postres = postresDe(estado.comida)
+  const conPostre = CON_POSTRE.includes(estado.comida)
+  const enPlato = new Set(items.map(({ it }) => it.id))
+  const enPostres = new Set(postres.map(({ it }) => it.id))
+  let lista = todos().filter((a) => MACROS.includes(a.grupo) || (a.grupo === 'postre' && conPostre))
+  lista = lista.filter((a) => {
+    if (estado.cadena === 'favoritos' && !esFav(a.id)) return false
+    if (!['todos', 'favoritos'].includes(estado.cadena) && cadenaDe(a) !== estado.cadena) return false
+    const texto = norm(`${a.nombre} ${CADENAS[cadenaDe(a)]} ${a.estado || ''}`)
+    return palabras.every((p) => texto.includes(p))
+  })
+  const rango = (a) => (esFav(a.id) ? 0 : relevancia(a, q))
+  lista = lista.map((a, i) => ({ a, i, r: rango(a) })).sort((x, y) => x.r - y.r || x.i - y.i).map((x) => x.a)
+  $('lista-busqueda').innerHTML = lista.length
+    ? lista
+        .map((a) => {
+          if (a.grupo === 'postre') return filaPostre(a, enPostres.has(a.id))
+          const sim = enPlato.has(a.id) ? null : calcular([...items, { it: { id: a.id, grupo: a.grupo, fijo: null }, alimento: a }], postres)
+          const g = sim ? sim.gramos[sim.gramos.length - 1] : null
+          return filaOpcion(a, a.grupo, false, g, enPlato.has(a.id), true)
+        })
+        .join('')
+    : `<div class="empty">${estado.cadena === 'favoritos' ? 'Aún no tienes favoritos.' : 'No hay alimentos con ese texto. Prueba con otra palabra o quita el filtro de arriba.'}</div>`
+  const filtro = estado.cadena === 'todos' ? '' : ` Filtro activo: ${estado.cadena === 'favoritos' ? 'favoritos' : CADENAS[estado.cadena]} (quítalo con «Todos»).`
+  $('nota-busqueda').textContent = `${lista.length} resultados.${filtro} Los gramos son los que le tocarían si lo añades ahora al plato de ${NOMBRE_COMIDA[estado.comida].toLowerCase()}.`
+}
+
+// Postres genéricos (yogur natural, kéfir, gelatina…): no cuentan en un grupo, se añaden al hueco de postre.
+function filaPostre(a, yaEsta) {
+  const base = a.medida ? a.medida.g : 125
+  const m = macrosDe(a, base)
+  const cad = cadenaDe(a)
+  return `<div class="item">
+    <button class="star" data-fav="${esc(a.id)}" aria-pressed="${esFav(a.id)}" aria-label="Favorito">★</button>
+    <div class="info"><b>${esc(a.nombre)}</b><div class="meta"><span class="tag">Postre</span>${cad !== 'generico' ? `<span class="tag">${CADENAS[cad]}</span>` : ''}<span>${fmt(m.p)} P · ${fmt(m.hc)} HC · ${fmt(m.g)} G</span></div></div>
+    <div class="amount"><b>${a.medida ? `1 ${esc(a.medida.nombre)}` : `${base}<small>g</small>`}</b><span>${Math.round(kcal(m))} kcal</span>
+      <button class="addbtn" data-addpostre="${esc(a.id)}" ${yaEsta ? 'disabled' : ''}>${yaEsta ? '✓' : '+ Postre'}</button></div>
+  </div>`
+}
+
+$('buscar').addEventListener('focus', entrarBusqueda)
+$('buscar').addEventListener('input', () => {
+  if (!buscando) entrarBusqueda()
+  else pintarBusqueda()
 })
-$('buscar').addEventListener('input', pintarLista)
-$('lista').addEventListener('click', (e) => {
+$('buscar-cancelar').addEventListener('click', salirBusqueda)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && buscando) salirBusqueda()
+})
+
+function clicEnLista(e) {
   const add = e.target.closest('[data-add]')
   if (add) {
     const lista = estado.plato[estado.comida] || []
     lista.push({ id: add.dataset.add, grupo: add.dataset.addgrupo, fijo: null })
     estado.plato[estado.comida] = lista
     guardar()
-    pintar()
+    if (buscando) salirBusqueda()
+    else pintar()
+    return
+  }
+  const post = e.target.closest('[data-addpostre]')
+  if (post) {
+    anadirPostre(post.dataset.addpostre)
+    if (buscando) salirBusqueda()
+    else pintar()
     return
   }
   const b = e.target.closest('[data-fav]')
@@ -294,8 +398,11 @@ $('lista').addEventListener('click', (e) => {
   const id = b.dataset.fav
   estado.favoritos = esFav(id) ? estado.favoritos.filter((x) => x !== id) : [...estado.favoritos, id]
   guardar()
-  pintarLista()
-})
+  if (buscando) pintarBusqueda()
+  else pintarLista()
+}
+$('lista').addEventListener('click', clicEnLista)
+$('lista-busqueda').addEventListener('click', clicEnLista)
 
 // ---------- Postres ----------
 function pintarPostres(s) {
@@ -373,14 +480,18 @@ $('cadenas-postre').addEventListener('click', (e) => {
   cadenaPostre = b.dataset.cp
   pintarHojaPostres()
 })
-$('lista-postres').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-postre]')
-  if (!b) return
-  const a = porId(b.dataset.postre)
+function anadirPostre(id) {
+  const a = porId(id)
+  if (!a) return
   const lista = estado.postres[estado.comida] || []
   lista.push(a.medida ? { id: a.id, modo: 'unidad', cantidad: 1 } : { id: a.id, modo: 'g', cantidad: 125 })
   estado.postres[estado.comida] = lista
   guardar()
+}
+$('lista-postres').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-postre]')
+  if (!b) return
+  anadirPostre(b.dataset.postre)
   $('sheet').hidden = true
   pintar()
 })
@@ -496,8 +607,12 @@ function mostrar(vista) {
     $(`vista-${v}`).hidden = v !== vista
     $(`nav-${v}`).setAttribute('aria-pressed', String(v === vista))
   }
-  $('meals').hidden = vista === 'dieta' || vista === 'alimentos'
-  $('mini').hidden = vista !== 'equiv'
+  if (vista !== 'equiv' && buscando) {
+    buscando = false
+    $('buscar').value = ''
+    aplicarModoBusqueda()
+  }
+  $('cabecera').hidden = vista !== 'equiv'
   if (vista === 'dieta') {
     $('texto').value = estado.texto || ''
     borrador = null

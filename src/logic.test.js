@@ -171,3 +171,20 @@ describe('líquidos', () => {
     expect(textoVolumen(al('pollo'), 100)).toBe('')
   })
 })
+
+describe('quesos añadidos', () => {
+  const quesos = ALIMENTOS.filter((a) => a.off && /havarti|mozzarella|lonchas|rallad/i.test(a.nombre))
+  it('hay Havarti light, lonchas y mozzarella rallada de las cadenas', () => {
+    const cadenas = (re) => new Set(quesos.filter((a) => re.test(a.nombre)).map((a) => a.cadena))
+    expect(cadenas(/havarti/i)).toEqual(new Set(['mercadona', 'ahorramas', 'alcampo', 'lidl']))
+    expect(cadenas(/mozzarella/i)).toEqual(new Set(['mercadona', 'ahorramas', 'alcampo']))
+    expect(quesos.some((a) => /lonchas/i.test(a.nombre) && a.cadena === 'mercadona')).toBe(true)
+  })
+  it('los macros cuadran con la energía de la etiqueta', () => {
+    const havarti = ALIMENTOS.find((a) => a.off === '8480000505460')
+    expect(havarti.p).toBe(27)
+    expect(havarti.g).toBe(17)
+    expect(havarti.hc).toBe(1.6)
+    expect(havarti.medida.g).toBe(26.5)
+  })
+})

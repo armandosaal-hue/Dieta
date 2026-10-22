@@ -2250,5 +2250,209 @@
   "t": 1774628804,
   "obsolete": false,
   "url": "https://world.openfoodfacts.org/product/20987435"
+ },
+ "8480000505460": {
+  "code": "8480000505460",
+  "name": "Havarti light",
+  "brands": "MERCADONA",
+  "stores": [
+   "mercadona"
+  ],
+  "q": "12 lonchas",
+  "serving": 26.5,
+  "hc": 1.6,
+  "p": 27,
+  "g": 17,
+  "kcal": 267,
+  "img": true,
+  "t": 1792040504,
+  "url": "https://world.openfoodfacts.org/product/8480000505460"
+ },
+ "8480000511997": {
+  "code": "8480000511997",
+  "name": "Queso Lonchas Light By Hacendado",
+  "brands": "Hacendado",
+  "stores": [
+   "Mercadona"
+  ],
+  "q": null,
+  "serving": 18.75,
+  "hc": 10.1,
+  "p": 14.6,
+  "g": 8.7,
+  "kcal": 177,
+  "img": true,
+  "t": 1774645277,
+  "url": "https://world.openfoodfacts.org/product/8480000511997"
+ },
+ "8480000511829": {
+  "code": "8480000511829",
+  "name": "Queso lonchas suave",
+  "brands": "Hacendado",
+  "stores": [
+   "Mercadona"
+  ],
+  "q": null,
+  "serving": 18.5,
+  "hc": 13.5,
+  "p": 10.5,
+  "g": 15,
+  "kcal": 231,
+  "img": true,
+  "t": 1790800739,
+  "url": "https://world.openfoodfacts.org/product/8480000511829"
+ },
+ "8480000550170": {
+  "code": "8480000550170",
+  "name": "Lonchas De Cheddar",
+  "brands": "Hacendado",
+  "stores": [
+   "Mercadona"
+  ],
+  "q": "200 g",
+  "serving": 20,
+  "hc": 0,
+  "p": 26,
+  "g": 32,
+  "kcal": 392,
+  "img": true,
+  "t": 1774634963,
+  "url": "https://world.openfoodfacts.org/product/8480000550170"
+ },
+ "8480000511102": {
+  "code": "8480000511102",
+  "name": "Mozzarella Pizza-Roma",
+  "brands": "MERCADONA",
+  "stores": [
+   "Mercadona"
+  ],
+  "q": "200g",
+  "serving": 200,
+  "hc": 2.5,
+  "p": 21,
+  "g": 21,
+  "kcal": 283,
+  "img": true,
+  "t": 1791392544,
+  "url": "https://world.openfoodfacts.org/product/8480000511102"
+ },
+ "8480000524027": {
+  "code": "8480000524027",
+  "name": "Mozzarella pizza-roma",
+  "brands": "Hacendado, MERCADONA",
+  "stores": [
+   "Mercadona"
+  ],
+  "q": "400g",
+  "serving": null,
+  "hc": 1,
+  "p": 22,
+  "g": 21,
+  "kcal": 281,
+  "img": true,
+  "t": 1788559261,
+  "url": "https://world.openfoodfacts.org/product/8480000524027"
+ },
+ "8421691720190": {
+  "code": "8421691720190",
+  "name": "Queso havarti light en lonchas",
+  "brands": "Alipende",
+  "stores": [
+   "Ahorramas"
+  ],
+  "q": "200 g",
+  "serving": null,
+  "hc": 0,
+  "p": 27,
+  "g": 16,
+  "kcal": 252,
+  "img": true,
+  "t": 1779338122,
+  "url": "https://world.openfoodfacts.org/product/8421691720190"
+ },
+ "8421691676572": {
+  "code": "8421691676572",
+  "name": "Queso mozzarella rallada",
+  "brands": "Alipende",
+  "stores": [],
+  "q": null,
+  "serving": null,
+  "hc": 1,
+  "p": 22,
+  "g": 21,
+  "kcal": 281,
+  "img": true,
+  "t": 1774651147,
+  "url": "https://world.openfoodfacts.org/product/8421691676572"
+ },
+ "8422241807606": {
+  "code": "8422241807606",
+  "name": "Queso rallado mozzarella",
+  "brands": "Auchan",
+  "stores": [
+   "Alcampo",
+   "Auchan"
+  ],
+  "q": "200 g",
+  "serving": null,
+  "hc": 1,
+  "p": 22,
+  "g": 21,
+  "kcal": 281,
+  "img": true,
+  "t": 1774644092,
+  "url": "https://world.openfoodfacts.org/product/8422241807606"
+ },
+ "8436039437227": {
+  "code": "8436039437227",
+  "name": "Mozzarella rallada",
+  "brands": "Auchan",
+  "stores": [
+   "Auchan"
+  ],
+  "q": "200 g",
+  "serving": null,
+  "hc": 0.6,
+  "p": 27,
+  "g": 22,
+  "kcal": 308,
+  "img": true,
+  "t": 1774642167,
+  "url": "https://world.openfoodfacts.org/product/8436039437227"
+ },
+ "8422241812853": {
+  "code": "8422241812853",
+  "name": "Havarti Light",
+  "brands": "Auchan, Lafuente",
+  "stores": [
+   "Alcampo",
+   "Auchan"
+  ],
+  "q": null,
+  "serving": 20,
+  "hc": 0,
+  "p": 28,
+  "g": 16,
+  "kcal": 256,
+  "img": true,
+  "t": 1780772819,
+  "url": "https://world.openfoodfacts.org/product/8422241812853"
+ },
+ "4056489157069": {
+  "code": "4056489157069",
+  "name": "Queso Havarti light",
+  "brands": "Milbona, Lidl",
+  "stores": [
+   "Lidl"
+  ],
+  "q": "300 g",
+  "serving": null,
+  "hc": 0.5,
+  "p": 31,
+  "g": 17,
+  "kcal": 279,
+  "img": true,
+  "t": 1774646435,
+  "url": "https://world.openfoodfacts.org/product/4056489157069"
  }
 }

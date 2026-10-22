@@ -54,7 +54,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .stack { display: grid; gap: 14px; min-width: 0; }
 
 /* Cabecera y comidas */
-header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 6px 8px; display: grid; gap: 10px; }
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 6px 8px; display: grid; gap: 8px; }
 .brand { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 h1 { font: 700 1.55rem/1 var(--display); margin: 0; letter-spacing: .01em; }
 .brand small { color: var(--muted); font-size: .8rem; }
@@ -185,6 +185,11 @@ nav.bottom button[aria-pressed="true"] { color: var(--accent); background: var(-
 
 
 /* Resumen y plato */
+.searchbar { display: flex; gap: 8px; align-items: center; }
+.searchbar .search { flex: 1; min-width: 0; }
+.cancel { border: 0; background: none; color: var(--accent); font-weight: 700; cursor: pointer; padding: 8px 2px; flex: none; }
+header.top.buscando .meals { display: none; }
+header.top .chips { padding-bottom: 0; }
 .mini-sum { display: flex; flex-wrap: wrap; gap: 4px 12px; font: 600 .82rem var(--display); font-variant-numeric: tabular-nums; color: var(--muted); }
 .mini-sum:empty { display: none; }
 .mini-sum .hc { color: var(--hc); } .mini-sum .p { color: var(--p); } .mini-sum .g { color: var(--g); }
@@ -218,8 +223,13 @@ nav.bottom button[aria-pressed="true"] { color: var(--accent); background: var(-
 </head>
 <body>
 <div class="app">
-  <header class="top">
-    <div class="brand"><h1>Mi dieta</h1><small id="sub"></small></div>
+  <div class="brand"><h1>Mi dieta</h1><small id="sub"></small></div>
+  <header class="top" id="cabecera">
+    <div class="searchbar">
+      <input class="search" id="buscar" type="search" placeholder="Buscar alimento o producto" autocomplete="off" enterkeyhint="search" aria-label="Buscar alimento o producto" />
+      <button class="cancel" id="buscar-cancelar" hidden>Cancelar</button>
+    </div>
+    <div class="chips" id="cadenas-top" role="group" aria-label="Filtrar la búsqueda por origen" hidden></div>
     <div class="meals" id="meals" role="group" aria-label="Comida"></div>
     <div class="mini-sum" id="mini" aria-live="polite"></div>
   </header>
@@ -228,6 +238,12 @@ nav.bottom button[aria-pressed="true"] { color: var(--accent); background: var(-
 
   <!-- Equivalencias -->
   <section id="vista-equiv" class="stack">
+    <div id="bloque-busqueda" class="stack" hidden>
+      <div class="list" id="lista-busqueda"></div>
+      <p class="help" id="nota-busqueda"></p>
+    </div>
+
+    <div id="bloque-normal" class="stack">
     <div class="panel">
       <div class="panel-head"><span class="label" id="obj-titulo">Objetivo</span><span class="help" id="obj-kcal"></span></div>
       <div class="macros" id="objetivo"></div>
@@ -248,11 +264,11 @@ nav.bottom button[aria-pressed="true"] { color: var(--accent); background: var(-
 
     <div class="tabs" role="tablist" id="tabs"></div>
     <div class="filters">
-      <input class="search" id="buscar" type="search" placeholder="Buscar alimento o producto" autocomplete="off" />
       <div class="chips" id="cadenas" role="group" aria-label="Filtrar por origen"></div>
     </div>
     <div class="list" id="lista"></div>
     <p class="help" id="nota-lista"></p>
+    </div>
   </section>
 
 

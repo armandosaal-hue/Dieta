@@ -256,6 +256,19 @@ PRODUCTOS = [
     ('20764074', 'lidl', 'g', 'p', None, False, 'Almendra natural'),
     ('20188023', 'lidl', 'g', 'p', None, False, 'Cacahuete tostado sin sal'),
     ('4056489168690', 'lidl', 'g', 'p', None, False, 'Nuez natural'),
+    # Quesos añadidos (Havarti light, lonchas y mozzarella rallada)
+    ('8480000505460', 'mercadona', 'p', 'g', ('loncha', 26.5), False, 'Havarti light en lonchas'),
+    ('8480000511997', 'mercadona', 'p', 'g', ('loncha', 18.75), False, 'Queso en lonchas light'),
+    ('8480000511829', 'mercadona', 'g', 'p', ('loncha', 18.5), False, 'Queso en lonchas suave'),
+    ('8480000550170', 'mercadona', 'g', 'p', ('loncha', 20), False, 'Queso cheddar en lonchas'),
+    ('8480000511102', 'mercadona', 'p', 'g', None, False, 'Mozzarella rallada pizza-roma (200 g)'),
+    ('8480000524027', 'mercadona', 'p', 'g', None, False, 'Mozzarella rallada pizza-roma (400 g)'),
+    ('8421691720190', 'ahorramas', 'p', 'g', None, False, 'Havarti light en lonchas'),
+    ('8421691676572', 'ahorramas', 'p', 'g', None, False, 'Mozzarella rallada'),
+    ('8422241807606', 'alcampo', 'p', 'g', None, False, 'Queso rallado mozzarella'),
+    ('8436039437227', 'alcampo', 'p', 'g', None, False, 'Mozzarella rallada'),
+    ('8422241812853', 'alcampo', 'p', 'g', ('loncha', 20), False, 'Havarti light en lonchas'),
+    ('4056489157069', 'lidl', 'p', 'g', None, False, 'Havarti light'),
 ]
 
 
