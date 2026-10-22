@@ -1,6 +1,6 @@
 # Mi dieta (app de macros)
 
-App web instalable. Se publica con GitHub Pages en https://armandosaal-hue.github.io/dieta/. No necesita compilación: HTML y JavaScript sin dependencias. Los datos del usuario (dieta, postres, favoritos y alimentos propios) se guardan en `localStorage` del dispositivo.
+App web instalable. Se publica con GitHub Pages en https://armandosaal-hue.github.io/Dieta/. No necesita compilación: HTML y JavaScript sin dependencias. Los datos del usuario (dieta, postres, favoritos y alimentos propios) se guardan en `localStorage` del dispositivo.
 
 ## Pantallas
 
